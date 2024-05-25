@@ -28,11 +28,12 @@ jobs:
         id: build-app
         with:
           sdk-channel: dev
-      - name: Upload app artifacts
-        uses: actions/upload-artifact@v3
+      - name: Upload fap artifact
+        uses: actions/upload-artifact@v4.3.3
         with:
           name: ${{ github.event.repository.name }}-${{ steps.build-app.outputs.suffix }}
           path: ${{ steps.build-app.outputs.fap-artifacts }}
+          overwrite: true
       - name: Lint sources
         uses: flipperdevices/flipperzero-ufbt-action@v0.1
         with:
