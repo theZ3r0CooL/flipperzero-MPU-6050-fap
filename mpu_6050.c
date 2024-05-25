@@ -1,113 +1,70 @@
 #include <furi.h>
-#include <furi_hal.h>
-#include <furi_hal_gpio.h>
-#include <furi_hal_resources.h>
-#include <furi_hal_i2c.h>
 #include <gui/gui.h>
-#include <input/input.h>
-#include <locale/locale.h>
-#include <notification/notification.h>
-#include <notification/notification_messages.h>
-
-#define TAG_MPU "mpu_6050_app"
+#include <i2c_dev/i2c_bus.h>
 
 #define MPU6050_ADDR 0x68
-#define MPU6050_REG_ACCEL_XOUT_H 0x3B
-#define MPU6050_REG_PWR_MGMT_1 0x6B
 
-typedef struct {
-    int16_t accel_x;
-    int16_t accel_y;
-    int16_t accel_z;
-    int16_t gyro_x;
-    int16_t gyro_y;
-    int16_t gyro_z;
-} MpuData;
-
-typedef struct {
-    FuriMessageQueue* queue;
-    MpuData* data;
-    ViewPort* view_port;
-} MpuContext;
-
-static void mpu6050_init() {
-    uint8_t buffer[2];
-    buffer[0] = MPU6050_REG_PWR_MGMT_1;
-    buffer[1] = 0x00;
-    furi_hal_i2c_write(FuriHalI2cBusI2c1, MPU6050_ADDR, buffer, 2);
+void mpu6050_init() {
+    // Wake up the MPU-6050 since it starts in sleep mode
+    uint8_t wake_up = 0x00;
+    furi_hal_i2c_write_reg_byte(
+        FuriHalI2cBusIdInternal, MPU6050_ADDR, 0x6B, &wake_up);
 }
 
-static void mpu6050_read_data(MpuData* data) {
-    uint8_t buffer[14];
+void mpu6050_read(int16_t* accel_x, int16_t* accel_y, int16_t* accel_z) {
+    uint8_t data[6];
     furi_hal_i2c_read_reg(
-        FuriHalI2cBusI2c1, MPU6050_ADDR, MPU6050_REG_ACCEL_XOUT_H, buffer, sizeof(buffer));
+        FuriHalI2cBusIdInternal, MPU6050_ADDR, 0x3B, data, 6);
 
-    data->accel_x = (buffer[0] << 8) | buffer[1];
-    data->accel_y = (buffer[2] << 8) | buffer[3];
-    data->accel_z = (buffer[4] << 8) | buffer[5];
-    data->gyro_x = (buffer[8] << 8) | buffer[9];
-    data->gyro_y = (buffer[10] << 8) | buffer[11];
-    data->gyro_z = (buffer[12] << 8) | buffer[13];
+    *accel_x = (data[0] << 8) | data[1];
+    *accel_y = (data[2] << 8) | data[3];
+    *accel_z = (data[4] << 8) | data[5];
 }
 
-static void render_callback(Canvas* canvas, void* ctx) {
-    MpuContext* mpuContext = (MpuContext*)ctx;
-    MpuData* mpuData = mpuContext->data;
+void mpu6050_display_callback(Canvas* canvas, void* ctx) {
+    int16_t accel_x, accel_y, accel_z;
+    mpu6050_read(&accel_x, &accel_y, &accel_z);
 
-    mpu6050_read_data(mpuData);
-
-    char buffer[50];
-    snprintf(buffer, sizeof(buffer), "Accel X: %d", mpuData->accel_x);
-    canvas_draw_str_aligned(canvas, 1, 1, AlignLeft, AlignTop, buffer);
-    snprintf(buffer, sizeof(buffer), "Accel Y: %d", mpuData->accel_y);
-    canvas_draw_str_aligned(canvas, 1, 10, AlignLeft, AlignTop, buffer);
-    snprintf(buffer, sizeof(buffer), "Accel Z: %d", mpuData->accel_z);
-    canvas_draw_str_aligned(canvas, 1, 20, AlignLeft, AlignTop, buffer);
-    snprintf(buffer, sizeof(buffer), "Gyro X: %d", mpuData->gyro_x);
-    canvas_draw_str_aligned(canvas, 1, 30, AlignLeft, AlignTop, buffer);
-    snprintf(buffer, sizeof(buffer), "Gyro Y: %d", mpuData->gyro_y);
-    canvas_draw_str_aligned(canvas, 1, 40, AlignLeft, AlignTop, buffer);
-    snprintf(buffer, sizeof(buffer), "Gyro Z: %d", mpuData->gyro_z);
-    canvas_draw_str_aligned(canvas, 1, 50, AlignLeft, AlignTop, buffer);
+    canvas_clear(canvas);
+    canvas_set_font(canvas, FontPrimary);
+    canvas_draw_str(canvas, 5, 10, "MPU-6050 Values:");
+    char buffer[32];
+    snprintf(buffer, sizeof(buffer), "X: %d", accel_x);
+    canvas_draw_str(canvas, 5, 30, buffer);
+    snprintf(buffer, sizeof(buffer), "Y: %d", accel_y);
+    canvas_draw_str(canvas, 5, 50, buffer);
+    snprintf(buffer, sizeof(buffer), "Z: %d", accel_z);
+    canvas_draw_str(canvas, 5, 70, buffer);
 }
 
-static void input_callback(InputEvent* input_event, FuriMessageQueue* queue) {
-    // Handle input events if necessary
-}
-
-int32_t mpu_6050_app(void* p) {
-    UNUSED(p);
-
-    MpuContext* mpuContext = malloc(sizeof(MpuContext));
-    mpuContext->data = malloc(sizeof(MpuData));
-    mpuContext->queue = furi_message_queue_alloc(8, sizeof(InputEvent));
-
+int32_t mpu6050_app(void* p) {
+    // Initialize MPU-6050
     mpu6050_init();
 
+    // Set up GUI
+    FuriMessageQueue* event_queue = furi_message_queue_alloc(8, sizeof(InputEvent));
     ViewPort* view_port = view_port_alloc();
-    view_port_draw_callback_set(view_port, render_callback, mpuContext);
-    view_port_input_callback_set(view_port, input_callback, mpuContext->queue);
-
+    view_port_draw_callback_set(view_port, mpu6050_display_callback, NULL);
     Gui* gui = furi_record_open(RECORD_GUI);
     gui_add_view_port(gui, view_port, GuiLayerFullscreen);
 
-    InputEvent event;
-    bool processing = true;
-    do {
-        if(furi_message_queue_get(mpuContext->queue, &event, FuriWaitForever) == FuriStatusOk) {
-            // Process input events if necessary
-        } else {
-            processing = false;
+    // Main loop
+    while (1) {
+        InputEvent event;
+        furi_message_queue_get(event_queue, &event, FuriWaitForever);
+        if (event.type == InputTypePress && event.key == InputKeyBack) {
+            break;
         }
-    } while(processing);
+    }
 
-    view_port_enabled_set(view_port, false);
+    // Clean up
     gui_remove_view_port(gui, view_port);
     view_port_free(view_port);
-    furi_record_close(RECORD_GUI);
-    furi_message_queue_free(mpuContext->queue);
-    free(mpuContext->data);
-    free(mpuContext);
+    furi_message_queue_free(event_queue);
 
     return 0;
+}
+
+int main() {
+    return mpu6050_app(NULL);
 }

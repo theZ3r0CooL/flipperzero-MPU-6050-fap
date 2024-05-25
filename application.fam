@@ -1,12 +1,12 @@
 App(
-    appid="accelerometer-debugger",
+    appid="accelerometer_debugger",
     name="[MPU-6050] Step Counter",
     fap_version=(1,0),
     apptype=FlipperAppType.EXTERNAL,
-    entry_point="mpu_6050_app",
+    entry_point="mpu6050_app",
     requires=[
-	"gui", 
-	"input"
+    	"gui", 
+    	"input"
 	],
     stack_size=2 * 1024,
     fap_icon="icon.png",
