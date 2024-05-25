@@ -63,10 +63,10 @@ int32_t mpu6050_app(void* p) {
     Gui* gui = furi_record_open(RECORD_GUI);
     gui_add_view_port(gui, view_port, GuiLayerFullscreen);
 
-    while (1) {
+    while(1) {
         InputEvent event;
         furi_message_queue_get(event_queue, &event, FuriWaitForever);
-        if (event.type == InputTypePress && event.key == InputKeyBack) {
+        if(event.type == InputTypePress && event.key == InputKeyBack) {
             break;
         }
     }
