@@ -6,25 +6,25 @@
 
 void mpu6050_init() {
     uint8_t wake_up = 0x00;
-    furi_hal_i2c_write_reg(
+    furi_hal_i2c_write_mem(
         &furi_hal_i2c_handle_external,
         MPU6050_ADDR,
         0x6B,
         &wake_up,
         1,
-        FuriHalI2cTimeoutDefault
+        100 // Timeout in milliseconds
     );
 }
 
 void mpu6050_read(int16_t* accel_x, int16_t* accel_y, int16_t* accel_z) {
     uint8_t data[6];
-    furi_hal_i2c_read_reg(
+    furi_hal_i2c_read_mem(
         &furi_hal_i2c_handle_external,
         MPU6050_ADDR,
         0x3B,
         data,
         6,
-        FuriHalI2cTimeoutDefault
+        100 // Timeout in milliseconds
     );
 
     *accel_x = (data[0] << 8) | data[1];
@@ -33,6 +33,9 @@ void mpu6050_read(int16_t* accel_x, int16_t* accel_y, int16_t* accel_z) {
 }
 
 void mpu6050_display_callback(Canvas* canvas, void* ctx) {
+    // Mark the unused parameter to avoid warning
+    (void)ctx;
+
     int16_t accel_x, accel_y, accel_z;
     mpu6050_read(&accel_x, &accel_y, &accel_z);
 
@@ -49,6 +52,9 @@ void mpu6050_display_callback(Canvas* canvas, void* ctx) {
 }
 
 int32_t mpu6050_app(void* p) {
+    // Mark the unused parameter to avoid warning
+    (void)p;
+
     mpu6050_init();
 
     FuriMessageQueue* event_queue = furi_message_queue_alloc(8, sizeof(InputEvent));
