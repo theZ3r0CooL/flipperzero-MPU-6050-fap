@@ -1,3 +1,5 @@
+[![build with ufbt](https://github.com/theZ3r0CooL/flipperzero-MPU-6050-fap/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/theZ3r0CooL/flipperzero-MPU-6050-fap/actions/workflows/build.yml)
+
 # Flipperzero-MPU-6050-fap
 This is a simple accelerometer debugger for FlipperZero using a MPU-6050 module. 
 
