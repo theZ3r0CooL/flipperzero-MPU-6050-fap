@@ -3,9 +3,9 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - '**'
+  # pull_request:
+  #   branches:
+  #     - '**'
 jobs:
   ufbt-resistors-build-action:
     runs-on: ubuntu-latest
@@ -13,6 +13,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install ufbt
       - name: List files
         run: ls -R
       - name: Build with ufbt
