@@ -7,14 +7,12 @@
 void mpu6050_init() {
     // Wake up the MPU-6050 since it starts in sleep mode
     uint8_t wake_up = 0x00;
-    furi_hal_i2c_write_reg_byte(
-        FuriHalI2cBusIdInternal, MPU6050_ADDR, 0x6B, &wake_up);
+    furi_hal_i2c_write_reg_byte(FuriHalI2cBusIdInternal, MPU6050_ADDR, 0x6B, &wake_up);
 }
 
 void mpu6050_read(int16_t* accel_x, int16_t* accel_y, int16_t* accel_z) {
     uint8_t data[6];
-    furi_hal_i2c_read_reg(
-        FuriHalI2cBusIdInternal, MPU6050_ADDR, 0x3B, data, 6);
+    furi_hal_i2c_read_reg(FuriHalI2cBusIdInternal, MPU6050_ADDR, 0x3B, data, 6);
 
     *accel_x = (data[0] << 8) | data[1];
     *accel_y = (data[2] << 8) | data[3];
@@ -49,10 +47,10 @@ int32_t mpu6050_app(void* p) {
     gui_add_view_port(gui, view_port, GuiLayerFullscreen);
 
     // Main loop
-    while (1) {
+    while(1) {
         InputEvent event;
         furi_message_queue_get(event_queue, &event, FuriWaitForever);
-        if (event.type == InputTypePress && event.key == InputKeyBack) {
+        if(event.type == InputTypePress && event.key == InputKeyBack) {
             break;
         }
     }

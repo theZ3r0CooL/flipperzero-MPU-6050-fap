@@ -3,7 +3,7 @@ App(
     name="[MPU-6050] Step Counter",
     fap_version=(1,0),
     apptype=FlipperAppType.EXTERNAL,
-    entry_point="mpu6050_app",
+    entry_point="main",
     requires=[
     	"gui", 
     	"input"
