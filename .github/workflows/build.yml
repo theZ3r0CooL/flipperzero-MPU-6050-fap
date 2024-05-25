@@ -9,31 +9,22 @@ on:
 jobs:
   ufbt-resistors-build-action:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - name: Official Dev channel
-            sdk-channel: dev
-          - name: Official Release channel
-            sdk-channel: release
-          - name: Unleashed Dev
-            sdk-index-url: https://up.unleashedflip.com/directory.json
-            sdk-channel: dev
-          - name: Unleashed Release
-            sdk-index-url: https://up.unleashedflip.com/directory.json
-            sdk-channel: release
-    name: 'fap ufbt build for ${{ matrix.name }}'
+    name: 'ufbt: Build for Dev branch'
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build with ufbt
-        uses: flipperdevices/flipperzero-ufbt-action@v0.1.2
+        uses: flipperdevices/flipperzero-ufbt-action@v0.1
         id: build-app
         with:
-          sdk-channel: ${{ matrix.sdk-channel }}
-          sdk-index-url: ${{ matrix.sdk-index-url }}
+          sdk-channel: dev
       - name: Upload app artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ github.event.repository.name }}-${{ steps.build-app.outputs.suffix }}-build
+          name: ${{ github.event.repository.name }}-${{ steps.build-app.outputs.suffix }}
           path: ${{ steps.build-app.outputs.fap-artifacts }}
+      - name: Lint sources
+        uses: flipperdevices/flipperzero-ufbt-action@v0.1
+        with:
+          skip-setup: true
+          task: lint
