@@ -1,6 +1,6 @@
 App(
     appid="accelerometer_debugger",
-    name="[MPU-6050] Step Counter",
+    name="[MPU-6050] Accelerometer",
     fap_version=(1,0),
     apptype=FlipperAppType.EXTERNAL,
     entry_point="main",
